@@ -807,3 +807,19 @@ def pull_data_gen_csvs_and_plots(authorization, location, start_date, end_date):
         print(f"An error occurred: {e}")
 
     return download_data
+
+
+def num_of_flood_days(csv_name='abbr_flood_events.csv'):
+    # Read dataframe
+    read_df = pd.read_csv(csv_name)
+
+    # Convert 'start_time_UTC' to Pandas datetime object
+    read_df['start_time_UTC'] = pd.to_datetime(read_df['start_time_UTC'])
+
+    # Extract date part from datetime column
+    read_df['date'] = read_df['start_time_UTC'].dt.date
+
+    # Count the number of unique dates
+    num_days = read_df['date'].nunique()
+
+    return print("Number of days of flooding:", num_days)
