@@ -255,7 +255,7 @@ def gen_abbr_flood_event_csv(dataframe, csv_filename='abbr_flood_events.csv'):
     max_water_level = 0
     flood_events = []
 
-    eastern = pytz.timezone('US/Eastern')
+    eastern = pytz.timezone('EST')
 
     dataframe = dataframe.sort_values(by=['date'])
     sensors = dataframe['sensor_ID'].unique().tolist()
@@ -444,7 +444,7 @@ def gen_flood_tracker(dataframe, csv_filename='flood_events.csv'):
     max_water_level = 0
     flood_events = []
 
-    eastern = pytz.timezone('US/Eastern')
+    eastern = pytz.timezone('EST')
 
     dataframe = dataframe.sort_values(by=['date'])
     sensors = dataframe['sensor_ID'].unique().tolist()
@@ -572,7 +572,7 @@ def find_outages(dataframe, csv_filename='sensor_outages.csv'):
             outage_start_time = sorted_dataframe['date'][i - 1]
             outage_end_time = sorted_dataframe['date'][i]
 
-            eastern = pytz.timezone('US/Eastern')
+            eastern = pytz.timezone('EST')
 
             start_time_est = outage_start_time.astimezone(eastern)
             end_time_est = outage_end_time.astimezone(eastern)
@@ -810,6 +810,20 @@ def pull_data_gen_csvs_and_plots(authorization, location, start_date, end_date):
 
 
 def num_of_flood_days(csv_name='abbr_flood_events.csv'):
+    """
+        This function generates an abbreviated flood event CSV file.
+
+        Parameters
+        ----------
+        csv_name : str, optional
+            The name of the csv containing the list of abbreviated events for counting the days.
+
+        Returns
+        -------
+        None
+            This function prints the number of flooding days to the command window.
+    """
+
     # Read dataframe
     read_df = pd.read_csv(csv_name)
 
