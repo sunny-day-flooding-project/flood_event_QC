@@ -876,10 +876,18 @@ def num_of_flood_days(timezone='EST', csv_name='abbr_flood_events.csv'):
     read_df['start_date'] = read_df['start_time'].dt.date
     read_df['end_date'] = read_df['end_time'].dt.date
 
-    # Count the number of unique dates
-    all_dates = pd.concat([read_df['start_date'], read_df['end_date']],
-                          axis=0, ignore_index=True)
-    all_dates = all_dates.rename('combined_date')
+    # Initialize an empty list to store all dates
+    all_dates = []
+
+    # Iterate over each row and append all dates in the range
+    for index, row in read_df.iterrows():
+        start_date = row['start_date']
+        end_date = row['end_date']
+        date_range = pd.date_range(start=start_date, end=end_date)
+        all_dates.extend(date_range)
+
+    # Convert the list of dates to a Pandas Series
+    all_dates = pd.Series(all_dates, name='combined_date')
 
     num_days = all_dates.nunique()
 
