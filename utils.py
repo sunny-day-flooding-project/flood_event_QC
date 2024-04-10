@@ -809,9 +809,9 @@ def pull_data_gen_csvs_and_plots(authorization, location, start_date, end_date):
     return download_data
 
 
-def num_of_flood_days(csv_name='abbr_flood_events.csv'):
+def num_of_flood_days_by_start(csv_name='abbr_flood_events.csv'):
     """
-        This function generates an abbreviated flood event CSV file.
+        This function returns a count of flood days only including the start date in UTC.
 
         Parameters
         ----------
@@ -835,5 +835,52 @@ def num_of_flood_days(csv_name='abbr_flood_events.csv'):
 
     # Count the number of unique dates
     num_days = read_df['date'].nunique()
+
+    return print("Number of days of flooding:", num_days)
+
+
+def num_of_flood_days(timezone='EST', csv_name='abbr_flood_events.csv'):
+    """
+        This function generates a count of flood events by calendar days including both start and end dates in
+        EST or UTC timezones.
+
+        Parameters
+        ----------
+        timezone : str
+            The timezone, either EST or UTC to count dates by.
+        csv_name : str, optional
+            The name of the csv containing the list of abbreviated events for counting the days.
+
+        Returns
+        -------
+        None
+            This function prints the number of flooding days to the command window.
+    """
+
+    # Read dataframe
+    read_df = pd.read_csv(csv_name)
+
+    if timezone == 'UTC':
+
+        # Convert 'start_time_UTC' to Pandas datetime object
+        read_df['start_time'] = pd.to_datetime(read_df['start_time_UTC'])
+        read_df['end_time'] = pd.to_datetime(read_df['end_time_UTC'])
+
+    if timezone == 'EST':
+
+        # Convert 'start_time_EST' to Pandas datetime object
+        read_df['start_time'] = pd.to_datetime(read_df['start_time_EST'])
+        read_df['end_time'] = pd.to_datetime(read_df['end_time_EST'])
+
+    # Extract date part from datetime column
+    read_df['start_date'] = read_df['start_time'].dt.date
+    read_df['end_date'] = read_df['end_time'].dt.date
+
+    # Count the number of unique dates
+    all_dates = pd.concat([read_df['start_date'], read_df['end_date']],
+                          axis=0, ignore_index=True)
+    all_dates = all_dates.rename('combined_date')
+
+    num_days = all_dates.nunique()
 
     return print("Number of days of flooding:", num_days)
