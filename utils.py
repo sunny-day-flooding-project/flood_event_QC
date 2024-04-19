@@ -892,3 +892,53 @@ def num_of_flood_days(timezone='EST', csv_name='abbr_flood_events.csv'):
     num_days = all_dates.nunique()
 
     return print("Number of days of flooding:", num_days)
+
+
+def avg_errors(error_csv, save_file_as=None, csv_filename='abbr_flood_events.csv'):
+    """
+    This function adds the averaged error values to the abbreviated flood events csv record.
+    :param error_csv: str
+        Name of the csv containing errors from Tony's algorithm.
+    :param save_file_as: str
+        Name of file to save new abbr events sheet with errors as. Defaults to overwriting current abbr_flood_events.
+    :param csv_filename: str
+        Name of the abbreviated flood events sheet. Defaults to the same default name as other functions.
+    :return:
+        Print statement of successful file save.
+    """
+    # Read CSV files
+    flood_df = pd.read_csv(csv_filename)
+    other_df = pd.read_csv(error_csv)
+
+    # Convert 'flood_end_time' to datetime
+    flood_df['end_time_UTC'] = pd.to_datetime(flood_df['end_time_UTC'], utc=True)
+    other_df['Date'] = pd.to_datetime(other_df['Date'], utc=True)
+
+    # Loop through each row in flood_df
+    averages = []
+    for index, row in flood_df.iterrows():
+        # Define the time range for a week before the flood end time
+        start_time = row['end_time_UTC'] - pd.Timedelta(days=7)
+        end_time = row['end_time_UTC']
+
+        # Select rows from other_df that fall within the defined time range
+        selected_rows = other_df[(other_df['Date'] >= start_time) & (other_df['Date'] <= end_time)]
+
+        # Calculate the average of desired columns
+        avg_values = selected_rows[['Mean', '5th Pct', '95th Pct']].mean().round(4)
+        averages.append(avg_values.values)
+
+    # Convert the list of averages to DataFrame
+    averages_df = pd.DataFrame(averages, columns=['Mean of Mean', 'Mean of 5th Pct', 'Mean of 95th Pct'])
+
+    # Concatenate averages_df with flood_df
+    flood_df_with_averages = pd.concat([flood_df, averages_df], axis=1)
+
+    if save_file_as is None:
+        save_file = 'abbr_flood_events.csv'
+    else:
+        save_file = save_file_as
+    # Save the result
+    flood_df_with_averages.to_csv(save_file, index=False)
+
+    return print('File with averages saved successfully.')
