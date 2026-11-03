@@ -25,21 +25,42 @@ The workflow has two parts:
 
 ## Contents
 
-| File | Purpose |
+```
+flood_event_QC/
+├── app.py                              Streamlit QC dashboard
+├── flood_qc/                           Python package with all the processing code
+│   ├── event_tracker.py                SDFP API pull, flood event and outage detection, plots
+│   ├── image_handler.py                copies camera images from the image archive
+│   ├── extreme_events.py               extreme event cross-reference (tag / master)
+│   ├── nws_advisories.py               NWS coastal and tropical advisories and calendar
+│   ├── wave_storms.py                  wave-driven storms from NDBC buoys and NOAA gauges
+│   ├── flood_time_summary.py           temporal summary plots
+│   └── utils.py                        shared logging helper
+├── extreme_event_example_config.yaml   config for extreme_events.py
+├── NWS_significant_event_lists/        Significant_Events_<year>.csv, one per year
+├── assets/logo.png                     sidebar logo
+├── reference/StormsFromWaveandWaterLevel.m   original MATLAB storm script
+├── .streamlit/config.toml              app theme and static file serving
+├── environment.yml                     conda environment (flood-qc)
+└── pyproject.toml                      code style settings (Black, Ruff)
+```
+
+| Path | Purpose |
 |---|---|
 | `app.py` | Streamlit QC dashboard: pulls the data and runs the review workflow. |
-| `flood_tools.py` | Core library. `EventTracker` (API pull, event and outage detection, plots, error metrics) and `ImageHandler` (copying camera images from the archive). |
+| `flood_qc/event_tracker.py` | `EventTracker`: downloads SDFP water level data, detects flood events and sensor outages, writes the CSVs, plots each event, and adds error metrics. |
+| `flood_qc/image_handler.py` | `ImageHandler`: copies camera images for flood events and outages out of the image archive. It also has helpers for building image-labeling and test sets. |
+| `flood_qc/extreme_events.py` | Command-line tool with two subcommands. `tag` adds the extreme-event criteria to each event in a QC results CSV. `master` builds a standalone master list of extreme events for a meteorological year. |
+| `flood_qc/nws_advisories.py` | Downloads NWS coastal and tropical watches, warnings, and advisories from the Iowa Environmental Mesonet (IEM) and draws a calendar of them. Used by `extreme_events.py`; also runs on its own. |
+| `flood_qc/wave_storms.py` | Finds wave-driven storm events at an NDBC buoy and the matching water level and surge at a NOAA tide gauge. Used by `extreme_events.py`; also runs on its own. |
+| `flood_qc/flood_time_summary.py` | Optional post-QC analysis: plots how flood events are distributed over day vs. night, hour of day, day of week, and season. |
+| `extreme_event_example_config.yaml` | Config for both `extreme_events.py` subcommands. Used by default. |
+| `NWS_significant_event_lists/` | A running record of `Significant_Events_<year>.csv` files: significant weather events transcribed by the SDFP team from the yearly lists published by the NWS [Newport/Morehead City (MHX)](https://www.weather.gov/mhx/SignificantEvents) and [Wilmington (ILM)](https://www.weather.gov/ilm/significantlocalevents) offices. Used as one of the extreme-event criteria. Add a file each year. |
+| `reference/StormsFromWaveandWaterLevel.m` | The original MATLAB storm-finding script (L. Velasquez Montoya, 2017; later edits by E. Farquhar). `flood_qc/wave_storms.py` is a Python port of it. Kept for reference. |
 | `.streamlit/config.toml` | App theme. It also turns on Streamlit **static file serving**, which the image viewer needs. Don't delete it. |
-| `logo.png` | Sidebar logo used by the app. |
-| `environment.yml` | Conda environment definition (`flood-qc`). |
-| `qc_for_extreme_events.py` | Tags each event in a QC results CSV with the extreme-event criteria. |
-| `gen_extreme_events_master.py` | Builds a standalone master list of extreme events for a meteorological year, independent of any flood events. |
-| `extreme_event_example_config.yaml` | Config shared by both extreme-event scripts. They use it by default. |
-| `pull_nws_advisories.py` | Downloads NWS coastal and tropical watches, warnings, and advisories from the Iowa Environmental Mesonet (IEM) and draws a calendar of them. Imported by both extreme-event scripts and also runs on its own. |
-| `storms_from_waves_wtr_levels.py` | Finds wave-driven storm events at an NDBC buoy and the matching water level and surge at a NOAA tide gauge. Imported by both extreme-event scripts and also runs on its own. |
-| `StormsFromWaveandWaterLevel.m` | The original MATLAB storm-finding script (L. Velasquez Montoya, 2017; later edits by E. Farquhar). `storms_from_waves_wtr_levels.py` is a Python port of it. Kept for reference. |
-| `NWS_significant_event_lists/` | A running record of `Significant_Events_<year>.csv` files: significant weather events transcribed by the SDFP team from the yearly lists that the NWS Newport/Morehead City (MHX) and Wilmington (ILM) offices publish. Used as one of the extreme-event criteria. Add a file each year. |
-| `time_dist_summary.py` | Optional post-QC analysis: plots how flood events are distributed over day vs. night, hour of day, day of week, and season. |
+
+All the command-line tools run as modules **from the repository root**, for example
+`python -m flood_qc.extreme_events tag`.
 
 ---
 
@@ -82,9 +103,9 @@ streamlit run app.py
 
 Streamlit opens the dashboard in your browser (usually http://localhost:8501).
 
-> You must launch from the repository root. The app reads `.streamlit/config.toml`, writes its working
-> files to `./data/` and `./static/`, and serves camera images from `./static/`, all relative to the
-> folder you launch from.
+> Launch from the repository root. Streamlit only reads `.streamlit/config.toml`, which turns on the
+> image viewer, from the folder you launch in. The app keeps its working files in `data/` and `static/`
+> next to `app.py`.
 
 ### 2. Pull new data (sidebar, "Pull New Data")
 
@@ -98,7 +119,7 @@ Fill in the form and click **Fetch Data & Images**.
 |---|---|
 | Query by | **Specific Sensor IDs** (normal use) or **Region Name**. |
 | API Username / Password | Your SDFP API credentials. They're typed in each session and held in memory only for the pull. They aren't saved to disk. |
-| Region Name | One of `Carolina Beach` (CB_01–03), `Beaufort` (BF_01), `Down East` (DE_01–04), `New Bern` (NB_01–02), `North River` (NR_01). Not case-sensitive. To add a region, edit `EventTracker._sensor_list_generator` in `flood_tools.py`. |
+| Region Name | One of `Carolina Beach` (CB_01–03), `Beaufort` (BF_01), `Down East` (DE_01–04), `New Bern` (NB_01–02), `North River` (NR_01). Not case-sensitive. To add a region, add it to `SENSOR_REGIONS` in `flood_qc/event_tracker.py`. |
 | Sensor IDs | The sensor to QC, e.g. `CB_01`. (A comma-separated list also works.) |
 | Start / End Date | Inclusive date range to pull. |
 | Source Image Drive Path | Root of the camera image archive (see [Setup](#setup)). |
@@ -200,7 +221,7 @@ To do this safely:
 
 ## Part 2: Extreme event cross-reference
 
-After QC, `qc_for_extreme_events.py` checks each event in `qc_results.csv` against three independent
+After QC, `python -m flood_qc.extreme_events tag` checks each event in `qc_results.csv` against three independent
 signs of an extreme coastal event:
 
 | Column | Criterion | Source |
@@ -217,8 +238,8 @@ Both extreme-event scripts read `extreme_event_example_config.yaml` by default. 
 them:
 
 ```yaml
-input_csv: "./data/qc_results.csv"                    # QC results from Part 1 (qc_for_extreme_events.py)
-write_path: "./data/master_extreme_events_list.csv"   # output of gen_extreme_events_master.py
+input_csv: "./data/qc_results.csv"                    # QC results from Part 1 (used by tag)
+write_path: "./data/master_extreme_events_list.csv"   # output of master
 met_year: 2025                                        # meteorological year: May 1, 2025 – Apr 30, 2026
 
 nws_offices:                                          # NWS WFO IDs for advisories and significant events
@@ -239,14 +260,14 @@ station_pairs:                                        # [NDBC wave buoy, NOAA ti
   `significant_weather = False`.
 
 To keep several configs (for example, one per sensor or year), save copies anywhere and pass one with
-`--config path/to/your_config.yaml`.
+`--config`, e.g. `python -m flood_qc.extreme_events tag --config path/to/your_config.yaml`.
 
 ### Run
 
 From the repository root:
 
 ```bash
-python qc_for_extreme_events.py
+python -m flood_qc.extreme_events tag
 ```
 
 Outputs, all written to the same folder as `input_csv`:
@@ -259,7 +280,7 @@ Outputs, all written to the same folder as `input_csv`:
 
 ### Optional: master list of extreme events
 
-`gen_extreme_events_master.py` uses the same three sources, but doesn't look at flood events. It merges
+The `master` subcommand uses the same three sources, but doesn't look at flood events. It merges
 all the overlapping time windows into one timeline for the meteorological year and marks which windows
 meet the 2-of-3 criteria. This is useful for listing extreme events that had no recorded flooding.
 
@@ -267,14 +288,15 @@ It uses the same config file. `write_path` sets the output CSV, and the intermed
 files are written to that same folder. `input_csv` is ignored.
 
 ```bash
-python gen_extreme_events_master.py
+python -m flood_qc.extreme_events master
 ```
 
 ### Adding a new year of significant events
 
-Each year, transcribe the significant events list from the NWS Newport/Morehead City (MHX) and Wilmington
-(ILM) office websites into `NWS_significant_event_lists/Significant_Events_<year>.csv`, with these
-columns:
+Each year, transcribe the significant events lists from the NWS
+[Newport/Morehead City (MHX)](https://www.weather.gov/mhx/SignificantEvents) and
+[Wilmington (ILM)](https://www.weather.gov/ilm/significantlocalevents) offices into
+`NWS_significant_event_lists/Significant_Events_<year>.csv`, with these columns:
 
 ```csv
 StartDate,EndDate,Office,EventDescription
@@ -288,7 +310,7 @@ WFO IDs used in `nws_offices`. Commit the new file to this repo to keep the runn
 
 ## Optional: temporal summary plots
 
-`time_dist_summary.py` makes a 2×2 figure (`flood_summary.png`) of flood events and flood days by:
+`flood_qc/flood_time_summary.py` makes a 2×2 figure (`flood_summary.png`) of flood events and flood days by:
 
 - day vs. night, based on the event start time and local sunrise and sunset
 - hour of day
@@ -299,7 +321,7 @@ Pass the events CSV and the sensor's latitude and longitude, which are used for 
 times:
 
 ```bash
-python time_dist_summary.py path/to/events.csv --lat 34.8697 --lon -76.3934 --output flood_summary.png
+python -m flood_qc.flood_time_summary path/to/events.csv --lat 34.8697 --lon -76.3934 --output flood_summary.png
 ```
 
 The CSV needs `start_time_UTC` and `end_time_UTC` columns. Every row is counted, so give it only the
@@ -315,18 +337,35 @@ Both helper scripts work without the rest of the pipeline:
 
 ```bash
 # NWS coastal/tropical advisories and calendar for one office and meteorological year
-python pull_nws_advisories.py MHX 2025 --outdir ./nws_output
+python -m flood_qc.nws_advisories MHX 2025 --outdir ./nws_output
 
 # Wave-driven storms for one buoy/gauge pair and calendar year
-python storms_from_waves_wtr_levels.py 2025 41110 8658163 --threshold 1.5 --duration 8 --outdir ./storm_output
+python -m flood_qc.wave_storms 2025 41110 8658163 --threshold 1.5 --duration 8 --outdir ./storm_output
 ```
+
+---
+
+## Using the code in a notebook
+
+The `flood_qc` package can be imported from a notebook or script started in the repository root:
+
+```python
+from datetime import date
+from flood_qc import EventTracker, ImageHandler
+
+tracker = EventTracker(("username", "password"), date(2025, 10, 1), date(2025, 10, 31))
+water_levels = tracker.get_data(["CB_01"])   # raw readings as a pandas DataFrame
+```
+
+Every function and class has a NumPy-style docstring, so `help(EventTracker)` (or `?` in Jupyter) shows
+the parameters and outputs.
 
 ---
 
 ## Notes and caveats
 
 - **Time zones.** The flood event CSVs and the app use fixed **EST (UTC−5) all year**, with no daylight
-  saving time. The NWS advisory calendar and `time_dist_summary.py` use US Eastern local time, which does
+  saving time. The NWS advisory calendar and `flood_time_summary.py` use US Eastern local time, which does
   observe daylight saving. All matching between datasets is done in UTC.
 - **Meteorological year.** NWS advisories are pulled for May 1 of `met_year` through April 30 of the next
   year. Storm tables and significant events are loaded for both full calendar years.
@@ -340,9 +379,20 @@ storage, not here. `data/` and `static/` are listed in `.gitignore`. If you writ
 for example a `--outdir` for the helper scripts or a custom path in your config, check `git status` before
 committing. All of these outputs can be regenerated, so they don't need to be kept in the repo.
 
+## Code style
+
+The code follows PEP 8 with a 79-character line length, NumPy-style docstrings, and comments that
+explain each step. The settings live in `pyproject.toml`. To check changes before committing, install
+the two tools once (`conda install -c conda-forge black ruff`), then run from the repository root:
+
+```bash
+black .         # format the code
+ruff check .    # check PEP 8, docstrings, naming, and import order
+```
+
 ## Credits
 
-`storms_from_waves_wtr_levels.py` is adapted from `StormsFromWaveandWaterLevel.m` by Liliana Velasquez
+`flood_qc/wave_storms.py` is adapted from `reference/StormsFromWaveandWaterLevel.m` by Liliana Velasquez
 Montoya (2017), with later modifications by Elizabeth Farquhar.
 
 ## License

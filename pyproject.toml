@@ -1,0 +1,23 @@
+# Code style settings for the flood_qc repository.
+# Run "black ." to format and "ruff check ." to lint (see README).
+
+[tool.black]
+# PEP 8 maximum line length
+line-length = 79
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 79
+target-version = "py312"
+
+[tool.ruff.lint]
+# E/W: PEP 8 (pycodestyle), F: pyflakes, D: docstrings,
+# N: PEP 8 naming, I: import order
+select = ["E", "W", "F", "D", "N", "I"]
+
+[tool.ruff.lint.pydocstyle]
+# Check docstrings against the NumPy convention
+convention = "numpy"
+
+[tool.ruff.lint.isort]
+known-first-party = ["flood_qc"]
