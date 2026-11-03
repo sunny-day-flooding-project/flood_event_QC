@@ -1,0 +1,35 @@
+# Extreme Event Configuration
+#
+# Shared by both extreme event scripts, which use this file by default:
+#   python qc_for_extreme_events.py        -> reads input_csv
+#   python gen_extreme_events_master.py    -> writes write_path
+# To use a different file, pass --config path/to/your_config.yaml
+#
+# Relative paths are resolved from the folder you run the script in
+# (run from the repository root). Significant_Events_<year>.csv files are
+# always read from NWS_significant_event_lists/ in the repository.
+
+# QC results from the Streamlit app (used by qc_for_extreme_events.py).
+# Output (qc_results_with_extreme_events.csv) and intermediate files are
+# written to this same folder.
+input_csv: "./data/qc_results.csv"
+
+# Output path for the master extreme event list (used by
+# gen_extreme_events_master.py). Intermediate files are written to this
+# same folder.
+write_path: "./data/master_extreme_events_list.csv"
+
+# Meteorological year: May 1 of met_year through April 30 of the next year
+met_year: 2025
+
+# NWS Weather Forecast Offices used for advisories and significant events
+nws_offices:
+  - "ILM"  # Wilmington, NC
+  - "MHX"  # Newport/Morehead City, NC
+
+# Marine observation pairings: [NDBC Wave Buoy, NOAA Tide Gauge]
+# Keep the pairs nearest the sensor(s) being QC'd.
+station_pairs:
+  - ["44056", "8651370"]  # Duck FRF / Duck Pier
+  - ["41110", "8658163"]  # Masonboro Inlet / Wrightsville Beach
+  - ["41159", "8656483"]  # Onslow Bay Outer / Beaufort, Duke Marine Lab

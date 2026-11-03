@@ -1,3 +1,16 @@
+"""
+Flood Event Temporal Summary.
+
+Plots a 2x2 summary of when flood events occur: day vs. night (based on the
+event start and local sunrise/sunset), hour of day, day of week, and season.
+
+Example
+-------
+python time_dist_summary.py data/approved_events.csv --lat 34.8697 --lon -76.3934
+"""
+
+import argparse
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -342,14 +355,33 @@ def main(filepath, lat, lon, output_file="flood_summary.png"):
     plot_summary_figure(day_night_stats, hourly_stats, weekday_stats, 
                         season_stats, output_file)
 
-# Example usage trigger (assuming script is run directly)
 if __name__ == "__main__":
-    # Substitute these with real runtime values/arguments
-    TARGET_CSV_PATH = "/home/rmccune/kDrive/main/research/data/flood_qc_results/flood_event_qc_Sea_Level_25_26/data/qc_results_with_extreme_events_cleaned.csv"
-    
-    # Example latitude/longitude (e.g., somewhere in Delaware based on sensor_ID "DE_01")
-    SENSOR_LAT = 34.8697
-    SENSOR_LON = -76.3934
-    
-    # Execute the workflow
-    main(TARGET_CSV_PATH, SENSOR_LAT, SENSOR_LON)
+    parser = argparse.ArgumentParser(
+        description="Plot the temporal distribution (day/night, hour, weekday, season) of flood events."
+    )
+    parser.add_argument(
+        "csv_path",
+        type=str,
+        help="CSV of flood events with start_time_UTC and end_time_UTC columns (e.g., approved events from qc_results.csv).",
+    )
+    parser.add_argument(
+        "--lat",
+        type=float,
+        required=True,
+        help="Sensor latitude in decimal degrees, used for sunrise/sunset (e.g., 34.8697).",
+    )
+    parser.add_argument(
+        "--lon",
+        type=float,
+        required=True,
+        help="Sensor longitude in decimal degrees, used for sunrise/sunset (e.g., -76.3934).",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="flood_summary.png",
+        help="Output PNG path (default: flood_summary.png).",
+    )
+
+    args = parser.parse_args()
+    main(args.csv_path, args.lat, args.lon, args.output)

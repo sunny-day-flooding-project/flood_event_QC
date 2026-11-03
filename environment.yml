@@ -3,13 +3,21 @@ channels:
   - conda-forge
 dependencies:
   - python=3.12
-  - streamlit>=1.32.0
-  - matplotlib
-  - numpy
+  # QC dashboard
+  - streamlit>=1.50
+  # Data processing and plotting
   - pandas
+  - numpy
+  - matplotlib
+  - pillow
   - pytz
   - astral
-  - jupyter
+  # Data access (SDFP API, NWS/IEM advisories, NDBC buoys, NOAA tide gauges)
+  - requests
+  - openpyxl
   - ndbc-api
   - noaa-coops=0.4.0
-  - openpyxl
+  # Config files for the extreme event scripts
+  - pyyaml
+  # Notebooks
+  - jupyter

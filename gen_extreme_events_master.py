@@ -18,6 +18,12 @@ import pandas as pd
 from pull_nws_advisories import fetch_extreme_events, generate_pillow_calendar
 from storms_from_waves_wtr_levels import extract_storm_events
 
+# Repository root (holds the default configuration YAML) and the folder that
+# keeps the running record of Significant_Events_<year>.csv files.
+REPO_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_CONFIG = os.path.join(REPO_DIR, "extreme_event_example_config.yaml")
+SIG_EVENTS_DIR = os.path.join(REPO_DIR, "NWS_significant_event_lists")
+
 
 def log(message: str) -> None:
     """
@@ -189,8 +195,8 @@ def run_orchestrator(config_path: str) -> None:
     for year in years_to_process:
         # Construct the expected filename for local events
         filename = f"Significant_Events_{year}.csv"
-        # Bind the filename to our designated working directory
-        filepath = os.path.join(target_dir, filename)
+        # Significant events CSVs are kept in the repository as a running record
+        filepath = os.path.join(SIG_EVENTS_DIR, filename)
 
         # Check if the local CSV data exists
         if os.path.exists(filepath):
@@ -200,7 +206,7 @@ def run_orchestrator(config_path: str) -> None:
             sig_events_list.append(temp_df)
         else:
             # Log a warning if the file is missing so the user is aware
-            log(f"  -> Warning: {filename} not found in {target_dir}.")
+            log(f"  -> Warning: {filename} not found in {SIG_EVENTS_DIR}.")
 
     # Check if we successfully loaded any significant events
     if sig_events_list:
@@ -396,8 +402,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--config",
         type=str,
-        default="config.yaml",
-        help="Path to the runtime config.yaml file (default: config.yaml).",
+        default=DEFAULT_CONFIG,
+        help="Path to the runtime config YAML (default: extreme_event_example_config.yaml in the repository).",
     )
 
     # Parse arguments provided by the user in the CLI
