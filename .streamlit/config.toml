@@ -1,0 +1,19 @@
+[theme]
+# Primary accent color (The Orange from your logo)
+primaryColor = "#F38B20"
+
+# Main background color
+backgroundColor = "#FFFFFF"
+
+# Sidebar and secondary container background (A very faint light blue)
+secondaryBackgroundColor = "#F0F8FF"
+
+# Text color (A deep blue-grey for readability)
+textColor = "#1C2833"
+
+# Font family
+font = "sans serif"
+
+[server]
+enableStaticServing = true
+maxStaticFolderSize = 10240

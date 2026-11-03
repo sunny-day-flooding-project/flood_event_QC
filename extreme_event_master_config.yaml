@@ -1,0 +1,11 @@
+# QC Orchestrator Run Configuration
+write_path: "/home/rmccune/Documents/sunnyday-flooding/flood_event_qc/data/master_extreme_events_list.csv"
+met_year: 2025
+
+# List of NWS Weather Forecast Offices to filter local logs and query APIs
+nws_offices:
+  - "MHX"
+
+# Marine observation pairings: [NDBC Wave Buoy, NOAA Tide Gauge]
+station_pairs:
+  - ["41159", "8656483"]
